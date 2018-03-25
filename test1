@@ -1,0 +1,6 @@
+class myModelAdmin(admin.ModelAdmin): 
+  class Media: 
+    js = ['admin/js/jquery-ui-1.10.2.custom.js', 'admin/js/mselect-to-mcheckbox.js'] 
+    css = { 
+      'all': ('admin/css/jquery-ui-1.10.2.custom.css', 'admin/css/mselect-to-mcheckbox.css',) 
+    }
