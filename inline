@@ -1,0 +1,31 @@
+from __future__ import unicode_literals
+from gen.gen_employee import *
+
+
+class InlineHelper(InlineHelper):
+    from gen_employee_in_group import GenEmployeeinGroupAdminTabularInlineViewModel
+    from gen_employee_in_skill import GenEmployeeinSkillAdminTabularInlineViewModel
+    from gen_sale import GenSaleAdminTabularInlineViewModel
+    from gen_user import GenUserAdminTabularInlineViewModel
+
+    class GenEmployeeGenEmployeeAdminTabularInlineViewModelMgrEmployeeId(GenEmployeeAdminTabularInlineViewModel):
+        fk_name = 'mgr_employee_id'
+
+
+    class GenEmployeeGenSaleAdminTabularInlineViewModelMgrEmployeeId(GenSaleAdminTabularInlineViewModel):
+        fk_name = 'mgr_employee_id'
+
+
+    class GenEmployeeGenSaleAdminTabularInlineViewModelSaleEmployeeId(GenSaleAdminTabularInlineViewModel):
+        fk_name = 'sale_employee_id'
+
+
+    def get_inlines(self):
+        return [
+            InlineHelper.GenEmployeeGenEmployeeAdminTabularInlineViewModelMgrEmployeeId,
+            InlineHelper.GenEmployeeinGroupAdminTabularInlineViewModel,
+            InlineHelper.GenEmployeeinSkillAdminTabularInlineViewModel,
+            InlineHelper.GenEmployeeGenSaleAdminTabularInlineViewModelMgrEmployeeId,
+            InlineHelper.GenEmployeeGenSaleAdminTabularInlineViewModelSaleEmployeeId,
+            InlineHelper.GenUserAdminTabularInlineViewModel,
+        ]
