@@ -1,0 +1,552 @@
+{% load admin_static %}{% load suit_tags %}{% load url from suit_compat %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{ 'app_env'|suit_conf }} - {% block title %}{{ title }} | {{ 'ADMIN_NAME'|suit_conf }}{% endblock %}</title>
+  {% block before_suit_styles %}{% endblock %}
+  <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% endblock %}"/>
+  <link rel="stylesheet" type="text/css" href="{% static 'suit/bootstrap/css/bootstrap.min.css' %}" media="all"/>
+  <link rel="stylesheet" type="text/css" href="{% static 'suit/css/suit.css' %}" media="all">
+  {% block extrastyle %}{% endblock %}
+  {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static 'admin/css/rtl.css' %}{% endblock %}"/>{% endif %}
+  <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
+  {% block suit_jquery %}{% if '1.9'|django_version_gte %}<script src="{% static 'suit/js/jquery-2.2.4.min.js' %}">{% else %}<script src="{% static 'suit/js/jquery-1.8.3.min.js' %}">{% endif %}</script>{% endblock %}
+  <script type="text/javascript">var Suit = { $: $.noConflict() }; if (!$) $ = Suit.$; </script>
+  <script src="{% static 'suit/bootstrap/js/bootstrap.min.js' %}"></script>
+  {% if 'SHOW_REQUIRED_ASTERISK'|suit_conf %}
+  <style type="text/css">.required:after { content: '*'; margin: 0 0 0 5px; position: absolute; color: #ccc;}</style>
+  {% endif %}
+  {% block extrahead %}{% endblock %}
+  {% block blockbots %}
+  <meta name="robots" content="NONE,NOARCHIVE"/>{% endblock %}
+
+  <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}" media="all">
+</head>
+{% load i18n %}
+
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
+
+<!-- Sticky footer wrap -->
+<div id="wrap">
+
+  <!-- Container -->
+  {% block container %}
+    <div id="container">
+
+      {% block header %}
+        {% if not is_popup %}
+          <!-- Header -->
+          <div id="header" class="header">
+            <div id="branding">
+              <a href="{% url 'admin:index' %}"><h1 id="site-name">{% block branding %}{{ 'ADMIN_NAME'|suit_conf }}{% endblock %}</h1></a>
+            </div>
+
+            {% block header_time %}
+            <div class="header-content header-content-first">
+              <div class="header-column icon">
+                <i class="icon-time"></i>
+              </div>
+              <div class="header-column">
+                <span class="date"> {% suit_date %}</span><br>
+                <span class="time" id="clock">{% suit_time %}</span>
+              </div>
+            </div>
+            {% endblock %}
+
+            {% block header_content %}
+              <!--<div class="header-content">
+                <div class="header-column icon">
+                  <i class="icon-comment"></i>
+                </div>
+                <div class="header-column">
+                  <a href="" class="grey"><b>2</b> new messages</a>
+                </div>
+              </div>-->
+            {% endblock %}
+
+            {% if user.is_active and user.is_staff %}
+              <div id="user-tools">
+                {% block welcome-msg %}
+                  {% trans 'Welcome,' %}
+                  <strong>
+                    {% filter force_escape %}
+                      {% firstof user.first_name user.username %}{% endfilter %}</strong>.
+                {% endblock %}
+                <span class="user-links">
+                {% block userlinks %}
+                  {% url 'django-admindocs-docroot' as docsroot %}
+                  {% if docsroot %}
+                    <a href="{{ docsroot }}">{% trans 'Documentation' %}</a>
+                    <span class="separator">|</span>
+                  {% endif %}
+                  <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a>
+                  <span class="separator">|</span>
+                  <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+                {% endblock %}
+                </span>
+                <span class="separator">|</span>
+                <span class="app-env"><b>{{ 'app_env'|suit_conf }}</b></span>
+              </div>
+            {% endif %}
+            {% block nav-global %}{% endblock %}
+          </div>
+        {% endif %}
+        <!-- END Header -->
+      {% endblock %}
+
+
+      <div class="suit-columns {{ is_popup|yesno:'one-column,two-columns' }}">
+
+        {% block content-center %}
+          <div id="suit-center" class="suit-column">
+
+            {% if not is_popup %}
+              {% block breadcrumbs %}
+                <ul class="breadcrumb">
+                  <li><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+                    {% if title %}
+                      <span class="divider">&raquo;</span>
+                      </li>
+                      <li class="active">
+                      {{ title }}
+                    {% endif %}
+                    </li>
+                </ul>
+              {% endblock %}
+            {% endif %}
+
+            {% block messages %}
+              {% if messages %}
+
+                {% for message in messages %}
+                  <div class="alert alert-{% firstof message.tags 'info' %}">
+                    <button class="close" data-dismiss="alert">×</button>
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endblock messages %}
+
+            <!-- Content -->
+            <div id="content" class="{% block coltype %}colM{% endblock %} row-fluid">
+              {% block pretitle %}{% endblock %}
+              {% block content_title %}{% if title %}
+                <h2 class="content-title">{{ title }}</h2>
+              {% endif %}{% endblock %}
+              {% block content %}
+                {% block object-tools %}{% endblock %}
+                {{ content }}
+              {% endblock %}
+              {% block sidebar_content %}
+                {% block sidebar %}{% endblock %}
+              {% endblock %}
+            </div>
+            <!-- END Content -->
+          </div>
+        {% endblock %}
+
+
+        {% block content-left %}
+          {% if not is_popup %}
+            <div id="suit-left" class="suit-column">
+              {% block quick-search %}
+                {% with 'SEARCH_URL'|suit_conf as search_url %}
+                  {% if search_url %}
+                    <form class="form-search nav-quick-search" autocomplete="off" action="{% if '/' in search_url %}{{ search_url }}{% else %}{% url search_url %}{% endif %}" method="GET">
+                      <input type="text" name="q" class="input-medium search-query" id="quick-search">
+                      <i class="input-icon icon-search"></i>
+                      <input type="submit" class="submit" value="">
+                    </form>
+                  {% endif %}
+                {% endwith %}
+              {% endblock %}
+
+              {% include "custom/nav_menu.html" %}
+              <!--{% include 'suit/menu.html' %}-->
+
+            </div>
+          {% endif %}
+        {% endblock %}
+
+      </div>
+    </div>
+  {% endblock %}
+
+  {% if not is_popup %}
+  <!-- Sticky footer push -->
+  <div id="push"></div>
+  {% endif %}
+
+</div>
+
+{% block footer %}
+  {% if not is_popup %}
+  <div id="footer" class="footer">
+    <div class="content">
+      <div class="tools">
+        {% block footer_links %}
+          <!--<a href="http://djangosuit.com/support/" target="_blank" class="icon"><i class="icon-question-sign"></i>Support</a>-->
+          <!--<a href="http://djangosuit.com/pricing/" target="_blank" class="icon"><i class="icon-bookmark"></i>Licence</a>-->
+          <!--<a href="http://github.com/darklow/django-suit/issues" target="_blank" class="icon"><i class="icon-comment"></i>Report a bug</a>-->
+        {% endblock %}
+      </div>
+
+      <div class="copyright">
+        {% block copyright %}
+          <!--Copyright &copy; 2013 DjangoSuit.com<br>Developed by <a href="http://djangosuit.com" target="_blank">DjangoSuit.com</a>-->
+          This is an unsupported application.
+        {% endblock %}
+      </div>
+
+      <div class="branding">{% block footer_branding %}
+        {% with 'ADMIN_NAME'|suit_conf as admin_name %}
+          {{ admin_name }}
+          {% if admin_name == 'Django Suit' %}
+            v{{ 'VERSION'|suit_conf }}
+          {% endif %}
+        {% endwith %}
+      {% endblock %}</div>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+  <script src="{% static 'suit/js/suit.js' %}"></script>
+  {% block extrajs %}{% endblock %}
+  <script src="{% static 'js/scripts.js' %}"></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% extends "admin/base.html" %}
+{% load admin_static %}
+
+{# Additional <head> content here, some extra meta tags or favicon #}
+{#{% block extrahead %}#}
+{#{% endblock %}#}
+
+
+{# Additional CSS includes #}
+{#{% block extrastyle %}#}
+{#  <link rel="stylesheet" type="text/css" href="{% static 'css/my_project.css' %}" media="all">#}
+{#{% endblock %}#}
+
+
+{# Additional JS files in footer, right before </body> #}
+{#{% block extrajs %}#}
+{#  <script type="text/javascript" src="{% static 'js/my_project.js' %}"></script>#}
+{#{% endblock %}#}
+
+
+{# Footer links (left side) #}
+{#{% block footer_links %}#}
+{#  <a href="/docs/" class="icon"><i class="icon-question-sign"></i>Documentation</a>#}
+{#{% endblock %}#}
+
+{# Additional header content like notifications or language switcher #}
+{#{% block header_content %}#}
+{#    {{ block.super }}#}
+{#    <div class="header-content">#}
+{#        <!-- First icon column -->#}
+{#        <div class="header-column icon">#}
+{#            <i class="icon-home"></i><br>#}
+{#            <i class="icon-cog"></i>#}
+{#        </div>#}
+{#        <div class="header-column" style="margin-right: 20px">#}
+{#            <a href="/" class="grey">Front-end</a><br>#}
+{#            <a href="" class="grey">One more link</a>#}
+{#        </div>#}
+{#        <!-- Second icon column -->#}
+{#        <div class="header-column icon">#}
+{#            <i class="icon-comment"></i>#}
+{#        </div>#}
+{#        <div class="header-column">#}
+{#            <a href="" class="grey">5 new messages</a>#}
+{#        </div>#}
+{#    </div>#}
+{#{% endblock %}#}
+
+{# Footer branding name (center) #}
+{#{% block footer_branding %}#}
+{#{% endblock %}#}
+
+
+{# Footer copyright (right side) #}
+{#{% block copyright %}#}
+{#  ----- Copyright &copy; 2013 Client<br>Developed by <a href="http://yoursite.com" target="_blank">YourName</a> #}
+{#{% endblock %}#}
+
+
+
+
+
+
+
+{% load nav_menu %}
+{% get_menu request as menu_items %}
+{% if menu_items %}
+    <div class="left-nav" id="left-nav"><ul>
+
+        {% url 'admin:index' as index_url %}
+        <li{% if index_url == request.path %} class="active"{% endif %}>
+            <a href="{{ index_url }}"><i class="icon-home"></i>Home</a>
+        </li>
+
+    {% for o in menu_items %}
+    {% include "custom/nav_menu_item.html" with menu_item=o %}
+    {% endfor %}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    {% if not menu_item.title %}
+<li class="divider separator"></li>
+{% else %}
+<li class="{{ menu_item.site_maps|yesno:' dropdown-submenu,' }}{{ menu_item.is_active|yesno:' active,' }}">
+
+    <a tabindex="-1" href="{% firstof menu_item.url '#' %}"{{ menu_item.blank|yesno:' target=_blank,'}}>
+        <i class="{% firstof menu_item.icon 'icon-none' %}"></i>{{ menu_item.title }}</a>
+
+    {% if menu_item.site_maps %}
+    <ul class="dropdown-menu">
+
+        {% for o in menu_item.site_maps %}
+        {% include "custom/nav_menu_item.html" with menu_item=o %}
+        {% endfor %}
+
+    </ul>
+    {% endif %}
+</li>
+{% endif %}
+
+
+
+
+
+
+
+
+
+templatestage
+
+
+
+
+
+
+
+
+from django import template
+register = template.Library()
+
+
+def _get_app(all_models, app_label):
+    return None if not app_label else\
+        next((app for app in all_models if app['app_label'].lower() == app_label.lower()), None)
+
+
+def _get_app_models(all_models, app, model_name = None, exclude_models = None):
+    if not app:
+        return []
+    else:
+        app_label = app['app_label']
+        exclude_models = exclude_models.lower().split(',') if exclude_models else []
+
+        if model_name is None or model_name == '*':
+            return [_to_menu_item(app_label, model)
+                    for model in app['models']
+                    if model['object_name'].lower() not in exclude_models]
+        else:
+            return [_to_menu_item(app_label, model)
+                    for model in app['models']
+                    if model['object_name'].lower() == model_name.lower()
+                    and model['object_name'].lower() not in exclude_models]
+
+
+def _get_menu_item_models(all_models, site_map):
+    models = []
+
+    if site_map.app_label:
+        values = site_map.app_label.split('.')
+        app_label = values[0]
+
+        if app_label.lower() == 'apps':
+            # All Apps
+            for app in all_models:
+                app_label2 = app['app_label']
+                if app_label2 != 'auth':
+                    # Exclude Auth app
+                    model = _to_menu_item(app_label2, app)
+                    model.site_maps = _get_app_models(all_models, app)
+                    models.append(model);
+
+        else:
+            # Specific App
+            app = _get_app(all_models, app_label)
+            if app:
+                site_map.url = _get_native_model_url(app)
+                models += _get_app_models(
+                    all_models,
+                    app,
+                    values[1] if values.__len__() >= 2 else None,
+                    site_map.exclude_models)
+
+    for content_type in site_map.content_types:
+        app = _get_app(all_models, content_type.app_label)
+        models += _get_app_models(all_models, app, content_type.model)
+
+    return models
+
+
+def _get_native_model_name(model):
+    """
+    Get model name by its last part of url
+    """
+    from django.core.urlresolvers import reverse, resolve
+
+    url_parts = _get_native_model_url(model).rstrip('/').split('/')
+    root_url_parts = reverse('admin:index').rstrip('/').split('/')
+    return '.'.join(url_parts[len(root_url_parts):][:2])
+
+
+def _get_native_model_url(model):
+    return model.get('url', model.get('app_url', model.get('admin_url', model.get('add_url', ''))))
+
+
+def _to_menu_item(app_label, item):
+    if isinstance(item, dict):
+        menu_item = type('', (), {})()
+        menu_item.app_label = app_label
+        menu_item.icon = item.get('icon', None)
+        menu_item.name = _get_native_model_name(item)
+        menu_item.title = item.get('name', app_label.upper())
+        menu_item.url = _get_native_model_url(item)
+        menu_item.add_url = item.get('add_url', None)
+        menu_item.perms = item.get('perms', None)
+
+    else:
+        menu_item = item
+
+    menu_item.blank = True if menu_item.url and menu_item.url.startswith('http') else None
+
+    return menu_item
+
+
+def process_menu_item(all_models, site_map):
+    if site_map.title == '-':
+        site_map = type('', (), {})()
+        site_map.parent_id = None
+        site_map.title = None
+        return site_map
+
+    else:
+        site_map.content_types = _get_menu_item_models(all_models, site_map)
+
+        if not hasattr(site_map, 'site_maps'):
+            site_map.site_maps = []
+
+        return _to_menu_item(site_map.app_label, site_map)
+
+
+@register.assignment_tag(takes_context=True)
+def get_menu(context, request):
+    from django.apps import apps
+    from suit.templatetags.suit_menu import get_admin_site
+
+    template_response = get_admin_site(request.current_app).index(request)
+    app_list = template_response.context_data['app_list']
+    if app_list.__len__() == 0:
+        return []
+
+    site_maps = list(apps.get_model('pim_de', 'DjangoSiteMap').objects.order_by('parent_id', 'sort_order', 'id').all())
+    if site_maps.__len__() == 0:
+        return []
+
+    site_map_content_types = list(apps.get_model('pim_de', 'DjangoSiteMapContentType').objects.order_by('sort_order', 'id').all())
+
+    menu_items = []
+
+    for site_map in site_maps:
+        site_map.content_types = [
+            o.content_type_id
+            for o in site_map_content_types
+            if o.site_map_id_id == site_map.id
+        ]
+
+        site_map = process_menu_item(app_list, site_map)
+        if site_map:
+            # Attach to parent
+            if site_map.parent_id:
+                parent = next(o for o in site_maps if o.id == site_map.parent_id_id)
+                site_map.parent_id = parent
+
+                if not hasattr(parent, 'site_maps'):
+                    parent.site_maps = [site_map]
+                else:
+                    parent.site_maps.append(site_map)
+            else:
+                site_map.parent_id_id = 0
+                menu_items.append(site_map)
+
+    # Merge content_types with site_maps
+    for site_map in site_maps:
+        if hasattr(site_map, 'site_maps'):
+            site_map.site_maps += site_map.content_types
+            site_map.content_types = None
+
+    return menu_items
+
+
+    </ul></div>
+{% endif %}
